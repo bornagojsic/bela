@@ -1,6 +1,6 @@
 import json
 from dek import *
-from novi_player import *
+from player2 import *
 from tablica import *
 from moj_tkinter import *
 from datetime import datetime
