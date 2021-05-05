@@ -15,7 +15,7 @@ def vrijednost(karta, adut):
 	if karta[-1] == adut:
 		karta = karta[:-1]
 		if karta in ["7", "8"]:
-			return 0
+			return int(karta) / 100
 		elif karta == "9":
 			return 14
 		elif karta == "10":
@@ -31,7 +31,7 @@ def vrijednost(karta, adut):
 	else:
 		karta = karta[:-1]
 		if karta in "7 8 9".split():
-			return 0
+			return int(karta) / 100
 		elif karta == "10":
 			return 10
 		elif karta == "B":
