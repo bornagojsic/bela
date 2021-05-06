@@ -11,11 +11,12 @@ class Tablica:
 	def dodaj(self, lista):
 		i0 = self.len
 		self.len += len(lista)
-		t = [[self.dodaj_celiju(self.prozor, lista, i, j, i0) for j in range(len(lista[0]))] for i in range(len(lista))]
+		t = [ [ self.dodaj_celiju(self.prozor, lista, i, j, i0) for j in range(len(lista[0])) ] for i in range(len(lista)) ]
 		self.tablica += t
 
 	def dodaj_celiju(self, prozor, lista, i, j, i0):
-		l = Label(prozor, width=10, text=lista[i][j], fg='#20bebe', font=("Cascadia Code", 18), justify='center', borderwidth=2, relief="groove")
+		l = Label(prozor, width=10, text=lista[i][j], fg='#20bebe',
+			font=("Cascadia Code", 18), justify='center', borderwidth=2, relief="groove")
 		l.grid(row=(i+i0), column=j)
 		return l
 

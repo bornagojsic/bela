@@ -97,6 +97,7 @@ def nova_runda(prozor):
 
 		for igrac in igraci:
 			igrac.karte = [dek.pop() for i in range(8)]
+			igrac.prazne = 0
 
 		gornja_karta = dek.pop()
 
@@ -106,10 +107,16 @@ def nova_runda(prozor):
 
 		igrac_na_redu = int(not igrac_na_redu)
 
+		[adut_gumbi[i].grid(column=(i if i < 2 else i+1), columnspan=2, row=7) for i in range(4)]
+		dalje.grid(column=2, columnspan=2, row=7)
+		
 		## ako je 1 onda je true
 		if igrac_na_redu:
-			dalje.config(bg="#bebebe", state="disabled")
-		
+			if random() >= 0.5:
+				dalje.config(bg="#bebebe", state="disabled")
+			else:
+				odaberi_aduta(prozor)
+
 		postavi_igru(prozor)
 
 
@@ -298,7 +305,7 @@ def pokazi_karte(prozor):
 			[igraci[int(not zvao)].bodovi, igraci[zvao].bodovi] = [igraci[int(not zvao)].bodovi + igraci[zvao].bodovi, 0]
 
 		## bodovi se ponovo updejtaju
-		tablica.promijeni_zadnji_red([igrac.bodovi for igrac in igraci])
+		tablica.promijeni_zadnji_red([igrac.bodovi if igrac.bodovi else "–" for igrac in igraci])
 		igraci[0].ukupno += igraci[0].bodovi
 		igraci[1].ukupno += igraci[1].bodovi
 		if any([igrac.ukupno >= 101 for igrac in igraci]):
@@ -307,7 +314,7 @@ def pokazi_karte(prozor):
 			## kao maximalni broj ukunih bodova
 			pobjednik = igraci[igraci_bodovi.index(max(igraci_bodovi))]
 			messagebox.showinfo("Gotovo", f"\n{pobjednik.ime} je pobijedio!")
-			quit()
+			pocetna(prozor)
 		print(tablica.tablica)
 		adut_je_odabran.set(0)
 		nova_runda(prozor)
@@ -376,7 +383,7 @@ def postavi_igru(prozor):
 
 
 def odaberi_aduta(prozor, odabrani_adut=""):
-	global adut, adut_label
+	global adut, adut_label, adut_gumbi, dalje
 
 	[adut_gumb.destroy() for adut_gumb in adut_gumbi]
 	dalje.destroy()
@@ -565,6 +572,7 @@ def bela(prozor, broj_i):
 
 		for igrac in igraci:
 			igrac.karte = [dek.pop() for i in range(8)]
+			igrac.prazne = 0
 
 		gornja_karta = dek.pop()
 
@@ -759,7 +767,6 @@ def pocetna(prozor):
 	o_beli_gumb = vrati_gumb(prozor, text="O igri", command=lambda p=prozor: o_beli(p)) 
 	
 	izadi = vrati_gumb(prozor, text="Izađi", command=quit)
-
 
 	bela_title.grid(column=1, row=0)
 	bela_slika.grid(column=1,row=1)
