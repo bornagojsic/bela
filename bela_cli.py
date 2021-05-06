@@ -46,8 +46,14 @@ def igrac_odgovori():
 		if odabrana_karta[-1] != bacene_karte[1][-1]:
 			print("POGREŠNA BOJA!")
 			return igrac_odgovori()
-		else:
-			return igraci[0].baci_kartu(odabrana_karta)
+		# u_boji = [karta for karta in igraci[0].vrati_karte() if karta[-1] == bacene_karte[1][-1]]
+		# uber = max(list(map(lambda k, a=adut[1][-1]: vrijednost(k,a), u_boji)))
+		# bacena_vrijednost = vrijednost(bacene_karte[1], adut[1][-1])
+		# print(uber, bacena_vrijednost, vrijednost(odabrana_karta, adut[1][-1]) < bacena_vrijednost)
+		# if uber >= bacena_vrijednost and vrijednost(odabrana_karta, adut[1][-1]) < bacena_vrijednost:
+		# 	print("BACI JACU KARTU")
+		# 	return igrac_odgovori()
+		return igraci[0].baci_kartu(odabrana_karta)
 	elif adut[1][-1] in igraci[0].boje():
 		if odabrana_karta[-1] != adut[1][-1]:
 			print("BACI ADUTA!")
@@ -68,8 +74,6 @@ def vrati_pobjednika_runde():
 		return int(not na_redu)
 	
 	return bacene_vrijednosti.index(max(bacene_vrijednosti))
-
-
 
 
 def napravi_potez():
@@ -96,7 +100,7 @@ def napravi_potez():
 
 	bacene_vrijednosti = list(map(lambda k, a=adut[1][-1]: vrijednost(k, a), bacene_karte))
 
-	## funkcija vrac index pobjednika runde
+	## funkcija vraca index pobjednika runde
 
 	pobjednik_runde = vrati_pobjednika_runde()
 
@@ -134,7 +138,7 @@ def napravi_potez():
 		tablica[-1] = [igrac.bodovi for igrac in igraci]
 		igraci[0].ukupno += igraci[0].bodovi
 		igraci[1].ukupno += igraci[1].bodovi
-		if any([igrac.ukupno >= 101 for igrac in igraci]):
+		if any([igrac.ukupno >= 501 for igrac in igraci]):
 			igraci_bodovi = [igrac.ukupno for igrac in igraci]
 			## pobjednik je igrac koji je na istom indexu
 			## kao maximalni broj ukunih bodova
@@ -148,7 +152,7 @@ def napravi_potez():
 
 
 def vrati_zvanja(karte):
-	global adut
+	global adut, boje
 
 	ret = [0]
 
@@ -167,7 +171,8 @@ def vrati_zvanja(karte):
 	if all([babe in karte for babe in 'D♠ D♥ D♦ D♣'.split()]):
 		ret.append(100)
 
-	## dodat nizove
+	if any([all([karta in karte for karta in f'7{boja} 8{boja} 9{boja}'.split()]) for boja in boje]):
+		ret.append(20)
 
 	return ret
 
@@ -221,11 +226,11 @@ def odaberi_aduta():
 	print(zvanja)
 
 	if max(zvanja[0]) > max(zvanja[1]):
-		igraci[0].bodovi += sum(zvanja[0])
+		igraci[0].bodovi += floor(sum(zvanja[0]))
 	elif max(zvanja[1]) > max(zvanja[0]):
-		igraci[1].bodovi += sum(zvanja[1])
+		igraci[1].bodovi += floor(sum(zvanja[1]))
 	else:
-		igraci[na_redu].bodovi += sum(zvanja[na_redu])
+		igraci[na_redu].bodovi += floor(sum(zvanja[na_redu]))
 
 
 	## provjeri jel ima belu
@@ -264,6 +269,9 @@ def zapocni_rundu():
 	igraci[0].karte[1] = 'B♥'
 	igraci[0].karte[2] = 'B♦'
 	igraci[0].karte[3] = 'B♣'
+	igraci[0].karte[4] = '7♥'
+	igraci[0].karte[5] = '8♥'
+	igraci[0].karte[6] = '9♥'
 
 	[print(f"{igrac.ime}: {igrac.karte}") for igrac in igraci]
 
