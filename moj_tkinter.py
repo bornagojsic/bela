@@ -7,6 +7,16 @@ bold_font = ("Cascadia Code", 18, "bold")
 naslovni_font = ("Cascadia Code", 32, "bold")
 
 
+def sleep(prozor, time):
+	print("cekanje...")
+	if type(time) is int:
+		temp = IntVar()
+		prozor.after(2500, lambda: temp.set(1))
+		prozor.wait_variable(temp)
+	print("cekanje gotovo")	
+	return
+
+
 def vrati_igru_label(prozor, text):
 	global font, primarna_boja
 	return Label(prozor, text=text, font=font, fg=primarna_boja, pady=15)

@@ -43,21 +43,21 @@ bacene_karte = ["prazno", "prazno"]
 
 bacene_karte_labeli = []
 
-def funkcija(prozor, adut):
-	global igraci, igrac_na_redu
+# def funkcija(prozor, adut):
+# 	global igraci, igrac_na_redu
 
-	pokazi_karte(prozor)
+# 	pokazi_karte(prozor)
 
-	bacene_karte = ["prazno", "prazno"]
+# 	bacene_karte = ["prazno", "prazno"]
 
-	if igrac_na_redu == 1:
-		print("HEJ")
+# 	if igrac_na_redu == 1:
+# 		print("HEJ")
 
-		karta = igraci[1].baci_kartu(a=adut)
+# 		karta = igraci[1].baci_kartu(a=adut)
 
-		karta_label = vrati_sliku_label(prozor, f"karte/{karta}.png", 9*sirina//10, 9*visina//10)
+# 		karta_label = vrati_sliku_label(prozor, f"karte/{karta}.png", 9*sirina//10, 9*visina//10)
 
-		karta_label.grid(row=3, column=3)
+# 		karta_label.grid(row=3, column=3)
 
 
 def vrati_kartu_gumb(prozor, path, sirina, visina, karta):
@@ -110,6 +110,8 @@ def nova_runda(prozor):
 		[adut_gumbi[i].grid(column=(i if i < 2 else i+1), columnspan=2, row=7) for i in range(4)]
 		dalje.grid(column=2, columnspan=2, row=7)
 		
+		zvanja_odzvana = False
+
 		## ako je 1 onda je true
 		if igrac_na_redu:
 			if random() >= 0.5:
@@ -156,29 +158,38 @@ def igrac_odgovori(odabrana_karta):
 
 	print(odabrana_karta)
 
-	if bacene_karte[1][-1] in igraci[0].boje():
-		if odabrana_karta[-1] != bacene_karte[1][-1]:
-			messagebox.showwarning("Upozorenje", "Pogrešna boja!")
+	if bacene_karte[1]:
+		if bacene_karte[1][-1] in igraci[0].boje():
+			if odabrana_karta[-1] != bacene_karte[1][-1]:
+				messagebox.showwarning("Upozorenje", "Pogrešna boja!")
+				return
+			u_boji = [karta for karta in igraci[0].vrati_karte() if karta[-1] == bacene_karte[1][-1]]
+			uber = max(list(map(lambda k, a=adut[1][-1]: vrijednost(k,a), u_boji)))
+			if uber >= vrijednost(bacene_karte[1], adut[1][-1]) > vrijednost(odabrana_karta, adut[1][-1]):
+				print(uber, bacene_karte[1], odabrana_karta)
+			# bacena_vrijednost = vrijednost(bacene_karte[1], adut[1][-1])
+			# print(uber, bacena_vrijednost, vrijednost(odabrana_karta, adut[1][-1]) < bacena_vrijednost)
+			# if uber >= bacena_vrijednost and vrijednost(odabrana_karta, adut[1][-1]) < bacena_vrijednost:
+			# 	print("BACI JACU KARTU")
+			# 	return igrac_odgovori()
+			igrac_je_odigrao.set(1)
+			bacene_karte[0] = igraci[0].baci_kartu(odabrana_karta)
+			print(f"{bacene_karte} su bacene")
 			return
-		# u_boji = [karta for karta in igraci[0].vrati_karte() if karta[-1] == bacene_karte[1][-1]]
-		# uber = max(list(map(lambda k, a=adut[1][-1]: vrijednost(k,a), u_boji)))
-		# bacena_vrijednost = vrijednost(bacene_karte[1], adut[1][-1])
-		# print(uber, bacena_vrijednost, vrijednost(odabrana_karta, adut[1][-1]) < bacena_vrijednost)
-		# if uber >= bacena_vrijednost and vrijednost(odabrana_karta, adut[1][-1]) < bacena_vrijednost:
-		# 	print("BACI JACU KARTU")
-		# 	return igrac_odgovori()
-		igrac_je_odigrao.set(1)
-		bacene_karte[0] = igraci[0].baci_kartu(odabrana_karta)
-		print(f"{bacene_karte} su bacene")
-		return
-	if adut[1][-1] in igraci[0].boje():
-		if odabrana_karta[-1] != adut[1][-1]:
-			messagebox.showwarning("Upozorenje", "Baci aduta!")
+		if adut[1][-1] in igraci[0].boje():
+			if odabrana_karta[-1] != adut[1][-1]:
+				messagebox.showwarning("Upozorenje", "Baci aduta!")
+				return
+
+			u_boji = [karta for karta in igraci[0].vrati_karte() if karta[-1] == adut[1][-1]]
+			uber = max(list(map(lambda k, a=adut[1][-1]: vrijednost(k,a), u_boji)))
+			if uber >= vrijednost(bacene_karte[1], adut[1][-1]) > vrijednost(odabrana_karta, adut[1][-1]):
+				print(uber, bacene_karte[1], odabrana_karta)
+
+			igrac_je_odigrao.set(1)
+			bacene_karte[0] = igraci[0].baci_kartu(odabrana_karta)
+			print(f"{bacene_karte} su bacene")
 			return
-		igrac_je_odigrao.set(1)
-		bacene_karte[0] = igraci[0].baci_kartu(odabrana_karta)
-		print(f"{bacene_karte} su bacene")
-		return
 	igrac_je_odigrao.set(1)
 	bacene_karte[0] = igraci[0].baci_kartu(odabrana_karta)
 	print(f"{bacene_karte} su bacene")
@@ -209,6 +220,62 @@ def ocisti_igru(prozor):
 	[widget.destroy() for widget in widgeti]
 
 
+def postavi_karte(prozor):
+	global igraci, sirina, visina
+
+	[igrac.sortiraj_karte() for igrac in igraci]
+
+	for i in range(5,7):
+		for j in range(1,5):
+			karta = igraci[0].karte[(i-5)*4+j-1]
+			karta = vrati_kartu_gumb(prozor, f"karte/{karta}.png", 9*sirina//10, 9*visina//10, karta)
+			karta.grid(column=j, row=i)
+
+	for i in range(1,3):
+		for j in range(1,5):
+			if igraci[1].karte[(i-1)*4+j-1] == "prazno":
+				karta = vrati_sliku_label(prozor, f"karte/prazno.png", 9*sirina//10, 9*visina//10)
+			else:
+				karta = vrati_sliku_label(prozor, f"karte/prekrenuta.png", 9*sirina//10, 9*visina//10)
+			karta.grid(column=j, row=i)
+
+	polje1 = vrati_sliku_label(prozor, f"karte/prazno.png", sirina, visina)
+	polje2 = vrati_sliku_label(prozor, f"karte/prazno.png", sirina, visina)
+	polje1.grid(row=3, column=2)
+	polje2.grid(row=3, column=3)
+
+
+
+def izvrsi_bacanje(prozor):
+	global igraci, igrac_na_redu, bacene_karte, bacene_karte_labeli
+	if igrac_na_redu == 0:
+		prozor.wait_variable(igrac_je_odigrao)
+		postavi_karte(prozor)
+		bacene_karte[1] = ai_baci()
+		ai_je_odigrao.set(1)
+		bacene_karte_labeli = [ vrati_sliku_label(prozor, f"karte/{karta if karta else 'prazno'}.png", 9*sirina//10, 9*visina//10)
+								for karta in bacene_karte ]
+		bacene_karte_labeli[0].grid(row=3, column=2)
+		bacene_karte_labeli[1].grid(row=3, column=3)
+		print("BACENO")
+		sleep(prozor, 1500)
+		print("GOTOVO CEKANJE")
+		[ bacena_karta.destroy() for bacena_karta in bacene_karte_labeli ]
+		return
+	bacene_karte[1] = ai_baci()
+	bacene_karte_labeli[1] = vrati_sliku_label(prozor, f"karte/{bacene_karte[1]}.png", 9*sirina//10, 9*visina//10)
+	bacene_karte_labeli[1].grid(row=3, column=3)
+	print(f"{igraci[1].ime} je bacio {bacene_karte}")
+	prozor.wait_variable(igrac_je_odigrao)
+	bacene_karte_labeli = [ vrati_sliku_label(prozor, f"karte/{karta if karta else 'prazno'}.png", 9*sirina//10, 9*visina//10)
+								for karta in bacene_karte ]
+	bacene_karte_labeli[0].grid(row=3, column=2)
+	bacene_karte_labeli[1].grid(row=3, column=3)
+	sleep(prozor, 500)
+	[ bacena_karta.destroy() for bacena_karta in bacene_karte_labeli ]
+	#bacene_karte[0] = igrac_odgovori()
+
+
 def pokazi_karte(prozor):
 	global adut, igraci, bacene_karte, bacene_vrijednosti, igrac_na_redu
 
@@ -232,41 +299,16 @@ def pokazi_karte(prozor):
 	bacene_karte_labeli = [ vrati_sliku_label(prozor, f"karte/{karta if karta else 'prazno'}.png", 9*sirina//10, 9*visina//10)
 								for karta in bacene_karte ]
 
-	[igrac.sortiraj_karte() for igrac in igraci] ## malo je redundant kad se bacaju karte
-
-	polje1 = vrati_sliku_label(prozor, f"karte/prazno.png", sirina, visina)
-	polje2 = vrati_sliku_label(prozor, f"karte/prazno.png", sirina, visina)
-	polje1.grid(row=3, column=2)
-	polje2.grid(row=3, column=3)
+	postavi_karte(prozor)
 	
-	for i in range(5,7):
-		for j in range(1,5):
-			karta = igraci[0].karte[(i-5)*4+j-1]
-			karta = vrati_kartu_gumb(prozor, f"karte/{karta}.png", 9*sirina//10, 9*visina//10, karta)
-			karta.grid(column=j, row=i)
+	izvrsi_bacanje(prozor)
 
-	for i in range(1,3):
-		for j in range(1,5):
-			if igraci[1].karte[(i-1)*4+j-1] == "prazno":
-				karta = vrati_sliku_label(prozor, f"karte/prazno.png", 9*sirina//10, 9*visina//10)
-			else:
-				karta = vrati_sliku_label(prozor, f"karte/prekrenuta.png", 9*sirina//10, 9*visina//10)
-			karta.grid(column=j, row=i)
-
-	if igrac_na_redu == 0:
-		prozor.wait_variable(igrac_je_odigrao)
-		bacene_karte[1] = ai_baci()
-	else:
-		bacene_karte[1] = ai_baci()
-		bacene_karte_labeli[1] = vrati_sliku_label(prozor, f"karte/{bacene_karte[1]}.png", 9*sirina//10, 9*visina//10)
-		bacene_karte_labeli[1].grid(row=3, column=3)
-		print(f"{igraci[1].ime} je bacio {bacene_karte}")
-		prozor.wait_variable(igrac_je_odigrao)
-		#bacene_karte[0] = igrac_odgovori()
+	#postavi_karte(prozor)
 
 	print(bacene_karte, adut)
 
 	igrac_je_odigrao.set(0)
+	ai_je_odigrao.set(0)
 
 	bacene_vrijednosti = list(map(lambda k, a=adut[1][-1]: vrijednost(k, a), bacene_karte))
 
@@ -316,7 +358,7 @@ def pokazi_karte(prozor):
 			## kao maximalni broj ukunih bodova
 			pobjednik = igraci[igraci_bodovi.index(max(igraci_bodovi))]
 			messagebox.showinfo("Gotovo", f"\n{pobjednik.ime} je pobijedio!")
-			pocetna(prozor)
+			vrati_se_na_pocetnu(prozor)
 		print(tablica.tablica)
 		adut_je_odabran.set(0)
 		nova_runda(prozor)
@@ -374,13 +416,111 @@ def prikazi_igru(prozor):
 		tablica = Tablica(tablica_prozor, [[ igrac.ime for igrac in igraci ], [0, 0]])
 
 
+def vrati_zvanja(karte):
+	global adut, boje
+
+	ret = [0]
+
+	## 4 iste
+
+	if all([decko in karte for decko in 'B♠ B♥ B♦ B♣'.split()]):
+		ret.append(200)
+
+	if all([devetka in karte for devetka in '9♠ 9♥ 9♦ 9♣'.split()]):
+		ret.append(150)
+
+	if all([asevi in karte for asevi in 'A♠ A♥ A♦ A♣'.split()]):
+		ret.append(100)
+
+	if all([kraljevi in karte for kraljevi in 'K♠ K♥ K♦ K♣'.split()]):
+		ret.append(100)
+
+	if all([babe in karte for babe in 'D♠ D♥ D♦ D♣'.split()]):
+		ret.append(100)
+
+	## 3 u nizu
+
+	if any([all([karta in karte for karta in f'7{boja} 8{boja} 9{boja}'.split()]) for boja in boje]):
+		ret.append(20)
+
+	if any([all([karta in karte for karta in f'8{boja} 9{boja} 10{boja}'.split()]) for boja in boje]):
+		ret.append(20.01)
+
+	if any([all([karta in karte for karta in f'9{boja} 10{boja} B{boja}'.split()]) for boja in boje]):
+		ret.append(20.02)
+
+	if any([all([karta in karte for karta in f'10{boja} B{boja} D{boja}'.split()]) for boja in boje]):
+		ret.append(20.03)
+
+	if any([all([karta in karte for karta in f'B{boja} D{boja} K{boja}'.split()]) for boja in boje]):
+		ret.append(20.04)
+
+	if any([all([karta in karte for karta in f'D{boja} K{boja} A{boja}'.split()]) for boja in boje]):
+		ret.append(20.05)
+
+	## 4 u nizu
+
+	if any([all([karta in karte for karta in f'7{boja} 8{boja} 9{boja} 10{boja}'.split()]) for boja in boje]):
+		ret.append(50)
+
+	if any([all([karta in karte for karta in f'8{boja} 9{boja} 10{boja} B{boja}'.split()]) for boja in boje]):
+		ret.append(50.01)
+
+	if any([all([karta in karte for karta in f'9{boja} 10{boja} B{boja} D{boja}'.split()]) for boja in boje]):
+		ret.append(50.02)
+
+	if any([all([karta in karte for karta in f'10{boja} B{boja} D{boja} K{boja}'.split()]) for boja in boje]):
+		ret.append(50.03)
+
+	if any([all([karta in karte for karta in f'B{boja} D{boja} K{boja} A{boja}'.split()]) for boja in boje]):
+		ret.append(50.04)
+
+	## 5 u nizu - ne treba jer je to zapravo 2 niza od 4 isprepletena, ali je i 3 od 3!!!
+
+	return ret
+
+
 def postavi_igru(prozor):
+	global zvanja_odzvana
 	prikazi_igru(prozor)
 
 	prikazi_karte(prozor)
 	print("ADUT:", adut, adut_je_odabran.get())
 	if not adut:
 		prozor.wait_variable(adut_je_odabran)
+
+	if not zvanja_odzvana:
+		## provjeri za belot
+
+		for igrac in igraci:
+			if len(igrac.boje()) == 1:
+				messagebox.showinfo("Belot", f"{igrac.ime} je pobijedio!")
+				vrati_se_na_pocetnu(prozor)
+
+		## dodaj zvanja
+
+		zvanja = [vrati_zvanja(igrac.karte) for igrac in igraci]
+
+		print("ZVANJA:", zvanja)
+
+		if max(zvanja[0]) > max(zvanja[1]):
+			igraci[0].bodovi += floor(sum(zvanja[0]))
+		elif max(zvanja[1]) > max(zvanja[0]):
+			igraci[1].bodovi += floor(sum(zvanja[1]))
+		else:
+			igraci[igrac_na_redu].bodovi += floor(sum(zvanja[igrac_na_redu]))
+
+
+		## provjeri jel ima belu
+
+		for igrac in igraci:
+			if ('D' + adut[1][-1]) in igrac.karte and ('K' + adut[1][-1]) in igrac.karte:
+				igrac.bodovi += 20
+
+		tablica.promijeni_zadnji_red([igrac.bodovi for igrac in igraci])
+
+		zvanja_odzvana = True
+
 	pokazi_karte(prozor)
 
 
@@ -439,7 +579,7 @@ def spremi_ime_igre(prozor, izadi_nakon_spremanja, vrati_se_na_pocetnu, pocetni_
 			time = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
 
 			if adut:
-				adut = [adut[0], igraci.index(adut[1])]
+				adut = [adut[1], igraci.index(adut[0])]
 
 			with open(f'spremljene igre/{ime_igre}.igra', 'w', encoding='utf8') as file:
 				json.dump([time] + [[ igrac.__dict__ for igrac in igraci ]] + [gornja_karta] + [adut] + [broj_igraca],
@@ -488,7 +628,7 @@ def spremi_igru(prozor, izadi=False, pocetna=False):
 
 
 def vrati_se_na_pocetnu(prozor):
-	global tablica_prozor
+	global tablica_prozor, spremljeno
 	if spremljeno:
 		tablica_prozor.destroy()
 		tablica_prozor = ""
@@ -647,7 +787,7 @@ def ucitaj_spremljenu_igru(igra):
 
 		adut_label = Label(prozor, text=f"Adut:", font=(bold_font), fg=primarna_boja)
 
-		adut_boja_label = vrati_sliku_label(prozor, f"karte/{adut[0]}.png", 50, 50)
+		adut_boja_label = vrati_sliku_label(prozor, f"karte/{adut[1]}.png", 50, 50)
 		
 		adut_label.grid(column=2, row=7)
 		adut_boja_label.grid(column=3, row=7)
@@ -794,6 +934,12 @@ pozadina.grid(row=0,column=0,rowspan=6,columnspan=3)
 igrac_je_odigrao = IntVar()
 
 adut_je_odabran = IntVar()
+
+ai_je_odigrao = IntVar()
+
+spremljeno = False
+
+zvanja_odzvana = False
 
 pocetna(prozor)
 
