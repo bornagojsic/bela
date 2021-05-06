@@ -67,11 +67,11 @@ class Igrac():
 		self.karte = pik + herc + kara + tref + self.prazne * ["prazno"]
 
 	def baci_kartu(self, karta):
-		print(self.ime, self.prazne)
+		print(self.ime, self.prazne, self.karte)
 		self.karte[self.karte.index(karta)] = "prazno"
 		self.prazne += 1
 		self.sortiraj_karte()
-		print(self.ime, self.prazne)
+		print(self.ime, self.prazne, self.karte)
 		return karta
 
 	def boje(self):
