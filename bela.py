@@ -308,6 +308,8 @@ def pokazi_karte(prozor):
 		tablica.promijeni_zadnji_red([igrac.bodovi if igrac.bodovi else "–" for igrac in igraci])
 		igraci[0].ukupno += igraci[0].bodovi
 		igraci[1].ukupno += igraci[1].bodovi
+		for igrac in igraci:
+			igrac.bodovi = 0
 		if any([igrac.ukupno >= 101 for igrac in igraci]):
 			igraci_bodovi = [igrac.ukupno for igrac in igraci]
 			## pobjednik je igrac koji je na istom indexu
