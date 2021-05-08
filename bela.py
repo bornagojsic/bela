@@ -43,22 +43,6 @@ bacene_karte = ["prazno", "prazno"]
 
 bacene_karte_labeli = []
 
-# def funkcija(prozor, adut):
-# 	global igraci, igrac_na_redu
-
-# 	pokazi_karte(prozor)
-
-# 	bacene_karte = ["prazno", "prazno"]
-
-# 	if igrac_na_redu == 1:
-# 		print("HEJ")
-
-# 		karta = igraci[1].baci_kartu(a=adut)
-
-# 		karta_label = vrati_sliku_label(prozor, f"karte/{karta}.png", 9*sirina//10, 9*visina//10)
-
-# 		karta_label.grid(row=3, column=3)
-
 
 def vrati_kartu_gumb(prozor, path, sirina, visina, karta):
 	gumb = vrati_sliku_gumb(prozor, path, sirina, visina, lambda k=karta: odigraj_kartu(k))
@@ -67,7 +51,7 @@ def vrati_kartu_gumb(prozor, path, sirina, visina, karta):
 
 
 def nova_runda(prozor):
-	global tablica, broj_igraca, adut_gumbi, dalje, gornja_karta, adut, igrac_na_redu, dek, meni
+	global tablica, broj_igraca, adut_gumbi, dalje, gornja_karta, adut, igrac_na_redu, dek, meni, zvanja_odzvana
 
 	ocisti_igru(prozor)
 
@@ -89,7 +73,7 @@ def nova_runda(prozor):
 	# bela(prozor, 2)
 
 	if broj_igraca == 2:
-		global adut_gumbi, dalje
+		zvanja_odzvana = False
 
 		tablica.dodaj([[0, 0]])
 		
@@ -109,8 +93,6 @@ def nova_runda(prozor):
 
 		[adut_gumbi[i].grid(column=(i if i < 2 else i+1), columnspan=2, row=7) for i in range(4)]
 		dalje.grid(column=2, columnspan=2, row=7)
-		
-		zvanja_odzvana = False
 
 		## ako je 1 onda je true
 		if igrac_na_redu:
@@ -352,7 +334,7 @@ def pokazi_karte(prozor):
 		igraci[1].ukupno += igraci[1].bodovi
 		for igrac in igraci:
 			igrac.bodovi = 0
-		if any([igrac.ukupno >= 101 for igrac in igraci]):
+		if any([igrac.ukupno >= 501 for igrac in igraci]):
 			igraci_bodovi = [igrac.ukupno for igrac in igraci]
 			## pobjednik je igrac koji je na istom indexu
 			## kao maximalni broj ukunih bodova
@@ -416,6 +398,45 @@ def prikazi_igru(prozor):
 		tablica = Tablica(tablica_prozor, [[ igrac.ime for igrac in igraci ], [0, 0]])
 
 
+def max_points(points, max_val_0=1, slope=[], visited=[]):
+	max_n = 0
+
+	if points:
+		for i in points:
+			points_ = points[:]
+			points_.remove(i)
+			max_val = max_val_0
+			for j in points:
+				m_val = 0
+				if i != j:
+					slope_ = [abs(i[k]-j[k]) for k in range(len(i))]
+					if max(slope_) <= 1:
+						if (slope and slope_ == slope) or not slope:
+							p = points[:]
+							p.remove(i)
+							m = max_points(p, 0, slope_, visited)
+							m_val += m[0]
+				max_val = max(max_val, m_val)
+			points.remove(i)
+			max_n = max(max_n, max_val)
+	return [max_n + 1, visited]
+
+
+def mapiranje_karata(karta):
+	if type(karta) is not str:
+		return
+	if karta[0] in "7 8 9 10".split():
+		return [int(karta[0])]
+	if karta[0] == "B":
+		return [11]
+	if karta[0] == "D":
+		return [12]
+	if karta[0] == "K":
+		return [13]
+	## if karta[0] == "A":
+	return [14]
+
+
 def vrati_zvanja(karte):
 	global adut, boje
 
@@ -438,44 +459,37 @@ def vrati_zvanja(karte):
 	if all([babe in karte for babe in 'D♠ D♥ D♦ D♣'.split()]):
 		ret.append(100)
 
-	## 3 u nizu
+	## provjeri nizove
 
-	if any([all([karta in karte for karta in f'7{boja} 8{boja} 9{boja}'.split()]) for boja in boje]):
-		ret.append(20)
+	print(karte)
+	duljine_nizova = []
+	for boja in boje:
+		niz = [ karta for karta in karte if karta[-1] == boja ]
+		niz_brojeva = list(map(mapiranje_karata, niz))
+		duljina_niza = max_points(niz_brojeva)[0]
+		duljine_nizova.append(duljina_niza)
+		print(boja, niz, niz_brojeva, duljina_niza)
 
-	if any([all([karta in karte for karta in f'8{boja} 9{boja} 10{boja}'.split()]) for boja in boje]):
-		ret.append(20.01)
+	zvanje = 0
+	if max(duljine_nizova) == 3:
+		if any([ all([ karta in karte for karta in f'7{boja} 8{boja} 9{boja}'.split() ]) for boja in boje ]):
+			zvanje += 20
+		if any([ all([ karta in karte for karta in f'8{boja} 9{boja} 10{boja}'.split() ]) for boja in boje ]):
+			zvanje += 20
+		if any([ all([ karta in karte for karta in f'9{boja} 10{boja} B{boja}'.split() ]) for boja in boje ]):
+			zvanje += 20
+		if any([ all([ karta in karte for karta in f'10{boja} B{boja} D{boja}'.split() ]) for boja in boje ]):
+			zvanje += 20
+		if any([ all([ karta in karte for karta in f'B{boja} D{boja} K{boja}'.split() ]) for boja in boje ]):
+			zvanje += 20
+		if any([ all([ karta in karte for karta in f'D{boja} K{boja} A{boja}'.split() ]) for boja in boje ]):
+			zvanje += 20
+	if max(duljine_nizova) == 4:
+		zvanje = 50
+	if max(duljine_nizova) >= 5:
+		zvanje = 100
 
-	if any([all([karta in karte for karta in f'9{boja} 10{boja} B{boja}'.split()]) for boja in boje]):
-		ret.append(20.02)
-
-	if any([all([karta in karte for karta in f'10{boja} B{boja} D{boja}'.split()]) for boja in boje]):
-		ret.append(20.03)
-
-	if any([all([karta in karte for karta in f'B{boja} D{boja} K{boja}'.split()]) for boja in boje]):
-		ret.append(20.04)
-
-	if any([all([karta in karte for karta in f'D{boja} K{boja} A{boja}'.split()]) for boja in boje]):
-		ret.append(20.05)
-
-	## 4 u nizu
-
-	if any([all([karta in karte for karta in f'7{boja} 8{boja} 9{boja} 10{boja}'.split()]) for boja in boje]):
-		ret.append(50)
-
-	if any([all([karta in karte for karta in f'8{boja} 9{boja} 10{boja} B{boja}'.split()]) for boja in boje]):
-		ret.append(50.01)
-
-	if any([all([karta in karte for karta in f'9{boja} 10{boja} B{boja} D{boja}'.split()]) for boja in boje]):
-		ret.append(50.02)
-
-	if any([all([karta in karte for karta in f'10{boja} B{boja} D{boja} K{boja}'.split()]) for boja in boje]):
-		ret.append(50.03)
-
-	if any([all([karta in karte for karta in f'B{boja} D{boja} K{boja} A{boja}'.split()]) for boja in boje]):
-		ret.append(50.04)
-
-	## 5 u nizu - ne treba jer je to zapravo 2 niza od 4 isprepletena, ali je i 3 od 3!!!
+	ret.append(zvanje)
 
 	return ret
 
@@ -493,6 +507,7 @@ def postavi_igru(prozor):
 		## provjeri za belot
 
 		for igrac in igraci:
+			igrac.sortiraj_karte()
 			if len(igrac.boje()) == 1:
 				messagebox.showinfo("Belot", f"{igrac.ime} je pobijedio!")
 				vrati_se_na_pocetnu(prozor)
@@ -509,7 +524,6 @@ def postavi_igru(prozor):
 			igraci[1].bodovi += floor(sum(zvanja[1]))
 		else:
 			igraci[igrac_na_redu].bodovi += floor(sum(zvanja[igrac_na_redu]))
-
 
 		## provjeri jel ima belu
 
@@ -694,6 +708,13 @@ def pokazi_meni():
 def bela(prozor, broj_i):
 	global igraci, gornja_karta, broj_igraca, dek
 
+	dek = '''
+		7♠ 8♠ 9♠ 10♠ B♠ D♠ K♠ A♠
+		7♥ 8♥ 9♥ 10♥ B♥ D♥ K♥ A♥
+		7♦ 8♦ 9♦ 10♦ B♦ D♦ K♦ A♦
+		7♣ 8♣ 9♣ 10♣ B♣ D♣ K♣ A♣
+		'''.split()
+
 	broj_igraca = broj_i
 
 	ocisti_prozor(prozor)
@@ -751,7 +772,7 @@ def nova_igra(prozor):
 
 
 def ucitaj_spremljenu_igru(igra):
-	global igraci, gornja_karta, adut, broj_igraca, adut_je_odabran
+	global igraci, gornja_karta, adut, broj_igraca, adut_je_odabran, zvanje_odzvano
 
 	with open(f'spremljene igre/{igra}.igra', 'r', encoding='utf8') as file:
 		[vrijeme, igraci_, gornja_karta_, adut_, broj_igraca_] = json.load(file)
@@ -781,6 +802,8 @@ def ucitaj_spremljenu_igru(igra):
 		pozadina.grid(rowspan=9, columnspan=6)
 
 	if adut:
+		zvanje_odzvano = True
+
 		adut_je_odabran.set(1)
 
 		adut = [igraci[adut[1]], adut[0]]
@@ -882,7 +905,9 @@ def o_beli(prozor):
 
 
 def pocetna(prozor):
-	global spremljene_igre, adut
+	global spremljene_igre, adut, zvanja_odzvana
+
+	zvanja_odzvana = False
 
 	adut = []
 
