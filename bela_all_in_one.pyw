@@ -1,13 +1,99 @@
 import sys
 import json
-from tablica import *
+from tkinter import *
 from math import floor
-from novi_player import *
-from moj_tkinter import *
 from datetime import datetime
 from tkinter import messagebox
+from PIL import Image, ImageTk
 from os import listdir, mkdir, remove
 from random import shuffle as promijesaj, random
+
+
+class Igrac():
+	def __init__(self, ime, ai, karte):
+		self.ime = ime
+		self.ai = ai
+		self.karte = karte
+		self.prazne = 0
+		self.bodovi = 0
+		self.ukupno = 0
+	
+	def sortiraj_karte(self):
+		[self.karte.remove("prazno") for i in range(self.prazne)]
+
+		pik = [karta for karta in self.karte if '♠' in karta]
+		herc = [karta for karta in self.karte if '♥' in karta]
+		kara = [karta for karta in self.karte if '♦' in karta]
+		tref = [karta for karta in self.karte if '♣' in karta]
+
+		for boja in [pik, herc, kara, tref]:
+			boja.sort(key=sortiraj)
+
+		self.karte = pik + herc + kara + tref + self.prazne * ["prazno"]
+
+	def baci_kartu(self, karta):
+		print(self.ime, self.prazne, self.karte)
+		self.karte[self.karte.index(karta)] = "prazno"
+		self.prazne += 1
+		self.sortiraj_karte()
+		print(self.ime, self.prazne, self.karte)
+		return karta
+
+	def boje(self):
+		boje = [karta[-1] for karta in self.karte if karta != "prazno"]
+		return list(dict.fromkeys(boje))
+
+	def vrati_karte(self):
+		return self.karte[:8-self.prazne]
+
+
+class Tablica:  
+	def __init__(self, prozor, lista):
+		self.prozor = prozor
+		self.lista = lista
+		self.len = 0
+		self.tablica = []
+		self.ukupno = []
+		self.zbroj = []
+		self.dodaj(self.lista)
+
+	def dodaj(self, lista):
+		if self.ukupno:
+			self.ukupno.destroy()
+
+		i0 = self.len
+		self.len += len(lista)
+		t = [ [ self.dodaj_celiju(self.prozor, lista, i, j, i0) for j in range(len(lista[0])) ] for i in range(len(lista)) ]
+		self.tablica += t
+		
+
+		self.ukupno = self.dodaj_celiju(self.prozor, [["Ukupno:"]], 0, 0, self.len)
+		self.ukupno.config(width=20, borderwidth=4)
+		self.ukupno.grid(row=self.len, column=0, columnspan=len(self.tablica[0]))
+		
+		self.zbroj = [ self.dodaj_celiju(self.prozor, [[self.zbroj_stupca(i) for i in range(len(self.tablica[0]))]],
+			0, j, self.len + 1) for j in range(len(self.tablica[0])) ]
+
+	def dodaj_celiju(self, prozor, lista, i, j, i0):
+		l = Label(prozor, width=10, text=lista[i][j], fg='#20bebe',
+			font=("Cascadia Code", 18), justify='center', borderwidth=2, relief="groove")
+		l.grid(row=(i+i0), column=j)
+		return l
+
+	def promijeni_vrijednost_celije(self, i, j, promijeni):
+		self.tablica[i][j].config(text=promijeni)
+
+	def promijeni_zadnji_red(self, lista):
+		[ self.tablica[-1][j].config(text=lista[j]) for j in range(len(self.tablica[-1])) ]
+
+		self.zbroj = [ self.dodaj_celiju(self.prozor, [[self.zbroj_stupca(i) for i in range(len(self.tablica[0]))]],
+			0, j, self.len + 1) for j in range(len(self.tablica[0])) ]
+
+	def vrati_vrijednost_celije(self, i, j):
+		return self.tablica[i][j]["text"]
+
+	def zbroj_stupca(self, i):
+		return sum([int(self.tablica[j][i]["text"]) if self.tablica[j][i]["text"] != "–" else 0 for j in range(1, self.len)])
 
 
 sirina = 9 * 25 // 4
@@ -41,6 +127,134 @@ tablica_prozor = ""
 bacene_karte = ["prazno", "prazno"]
 
 bacene_karte_labeli = []
+
+primarna_boja = "#20bebe"
+font = ("Cascadia Code", 18)
+bold_font = ("Cascadia Code", 18, "bold")
+naslovni_font = ("Cascadia Code", 32, "bold")
+
+
+def sleep(prozor, time):
+	print("cekanje...")
+	if type(time) is int:
+		temp = IntVar()
+		prozor.after(2500, lambda: temp.set(1))
+		prozor.wait_variable(temp)
+	print("cekanje gotovo")	
+	return
+
+
+def vrati_igru_label(prozor, text):
+	global font, primarna_boja
+	return Label(prozor, text=text, font=font, fg=primarna_boja, pady=15)
+
+
+def vrati_naslov(prozor, text):
+	global naslovni_font, primarna_boja
+	return Label(prozor, text=text, font=naslovni_font, fg=primarna_boja)
+
+
+def vrati_gumb(prozor, text, command):
+	global font, primarna_boja
+	return Button(prozor, text=text, font=font, bg=primarna_boja, fg="#fff",
+		activebackground='#eee', activeforeground='#10aeae', command=command)#, relief="flat")
+
+
+def vrati_entry(prozor, sirina=10):
+	global font, primarna_boja
+	return Entry(prozor, width=sirina, font=font, fg=primarna_boja)
+
+
+def svi_podwidgeti(prozor):
+	widgeti = prozor.winfo_children()
+
+	for widget in widgeti:
+		if widget.winfo_children():
+			widgeti.extend(widget.winfo_children())
+
+	return widgeti
+
+
+def izbrisi(widget):
+	try:
+		if widget.winfo_class() != "Toplevel":
+			widget.destroy()
+	except:
+		pass
+
+
+def ocisti_prozor(prozor):
+	[ izbrisi(widget) for widget in svi_podwidgeti(prozor)[2:]  ]
+
+
+def vrati_sliku(prozor, path, sirina=0, visina=0):
+	slika = Image.open(path)
+	if sirina and visina:
+		slika = slika.resize((sirina, visina), Image.ANTIALIAS)
+	slika = ImageTk.PhotoImage(slika)
+	return slika
+
+
+def vrati_sliku_label(prozor, path, sirina=0, visina=0):
+	slika = vrati_sliku(prozor, path, sirina, visina)
+	slika_label = Label(image=slika)
+	slika_label.image = slika
+	return slika_label
+
+
+def vrati_sliku_gumb(prozor, path, sirina=0, visina=0, command=lambda: None):
+	global font, primarna_boja
+	slika = vrati_sliku(prozor, path, sirina, visina)
+	gumb = Button(prozor, image=slika, font=font, bg=primarna_boja, fg="#fff",
+		activebackground='#eee', activeforeground='#10aeae', command=command)
+	gumb.image = slika
+	return gumb
+
+
+def sortiraj(karta):
+	karta = karta[:-1]
+	if karta in "7 8 9 10".split():
+		return int(karta)-10
+	elif karta == "B":
+		return 2
+	elif karta == "D":
+		return 3
+	elif karta == "K":
+		return 4
+	elif karta == "A":
+		return 11
+
+def vrijednost(karta, adut):
+	if karta[-1] == adut:
+		karta = karta[:-1]
+		if karta in ["7", "8"]:
+			return int(karta) / 100
+		elif karta == "9":
+			return 14
+		elif karta == "10":
+			return 10
+		elif karta == "B":
+			return 20
+		elif karta == "D":
+			return 3
+		elif karta == "K":
+			return 4
+		elif karta == "A":
+			return 11
+	else:
+		karta = karta[:-1]
+		if karta in "7 8 9".split():
+			return int(karta) / 100
+		elif karta == "10":
+			return 10
+		elif karta == "B":
+			return 2
+		elif karta == "D":
+			return 3
+		elif karta == "K":
+			return 4
+		elif karta == "A":
+			return 11
 
 
 def vrati_kartu_gumb(prozor, path, sirina, visina, karta):
@@ -928,7 +1142,7 @@ def pocetna(prozor):
 	
 	o_beli_gumb = vrati_gumb(prozor, text="O igri", command=lambda p=prozor: o_beli(p)) 
 	
-	izadi = vrati_gumb(prozor, text="Izađi", command=quit)
+	izadi = vrati_gumb(prozor, text="Izađi", command=lambda: sys.exit())
 
 	bela_title.grid(column=1, row=0)
 	bela_slika.grid(column=1,row=1)
