@@ -1,8 +1,8 @@
 import sys
 import json
-from tablica import *
+from tablica import Scoreboard
 from math import floor
-from novi_player import *
+from novi_player import Player, sort_card, calculate_card_value
 from moj_tkinter import *
 from datetime import datetime
 from tkinter import messagebox
@@ -20,7 +20,7 @@ visina_prozora = 950
 sirina_slike = 2590//10
 visina_slike = 2130//10
 
-vrati_bela_slika = lambda prozor: vrati_sliku_label(prozor, "karte/bela-removebg.png", sirina_slike, visina_slike)
+create_bela_image = lambda window: create_image_label(window, "karte/bela-removebg.png", sirina_slike, visina_slike)
 
 dek = '''
 		7♠ 8♠ 9♠ 10♠ B♠ D♠ K♠ A♠
@@ -43,10 +43,10 @@ bacene_karte = ["prazno", "prazno"]
 bacene_karte_labeli = []
 
 
-def vrati_kartu_gumb(prozor, path, sirina, visina, karta):
-	gumb = vrati_sliku_gumb(prozor, path, sirina, visina, lambda k=karta: odigraj_kartu(k))
-	gumb.config(borderwidth=0, bg="#666")
-	return gumb
+def create_card_button(window, path, width, height, card):
+	button = create_image_button(window, path, width, height, lambda k=card: odigraj_kartu(k))
+	button.config(borderwidth=0, bg="#666")
+	return button
 
 
 def nova_runda(prozor):
@@ -65,8 +65,8 @@ def nova_runda(prozor):
 
 	adut = []
 
-	meni = vrati_gumb(prozor, "☰", pokazi_meni)
-	
+	meni = create_styled_button(prozor, "☰", pokazi_meni)
+
 	meni.grid(row=0, column=0)
 
 	# bela(prozor, 2)
@@ -386,7 +386,12 @@ def prikazi_igru(prozor):
 		tablica_prozor = Toplevel(prozor)
 		tablica_prozor.geometry(f"+{sirina_prozora+5}+{y0}")
 		tablica_prozor.title("Bela")
-		tablica_prozor.iconbitmap('karte/tref.ico')
+		try:
+		    tablica_prozor.iconbitmap('karte/tref.ico')
+		except TclError:
+		    # On some systems (especially Linux), .ico files may not be supported
+		    # The window will use default icon, which is acceptable
+		    pass
 		tablica_prozor.resizable(False, False)
 		tablica_prozor.protocol("WM_DELETE_WINDOW", lambda: None)
 
@@ -619,7 +624,12 @@ def spremi_igru(prozor, izadi=False, pocetna=False):
 
 	spremanje_prozor = Toplevel(prozor)
 	spremanje_prozor.title("Spremanje")
-	spremanje_prozor.iconbitmap('karte/tref.ico')
+	try:
+	    spremanje_prozor.iconbitmap('karte/tref.ico')
+	except TclError:
+	    # On some systems (especially Linux), .ico files may not be supported
+	    # The window will use default icon, which is acceptable
+	    pass
 	spremanje_prozor.resizable(False, False)
 
 	spremanje_canvas = Canvas(spremanje_prozor, width=300, height=250)
@@ -683,12 +693,12 @@ def pokazi_meni():
 	
 	meni_label = vrati_naslov(prozor, "Meni")
 	
-	bela_slika = vrati_bela_slika(prozor)
+	bela_slika = create_bela_image(prozor)
 
-	nastavi_igru_gumb = vrati_gumb(prozor, "Nastavi", lambda: nastavi_igru())
-	spremi_igru_gumb = vrati_gumb(prozor, "Spremi", lambda: spremi_igru(prozor))
-	vrati_se_na_pocetnu_gumb = vrati_gumb(prozor, "Početni meni", lambda: vrati_se_na_pocetnu(prozor))
-	izadi_bez_spremanja_gumb = vrati_gumb(prozor, "Izađi", lambda: izadi_bez_spremanja(prozor))
+	nastavi_igru_gumb = create_styled_button(prozor, "Nastavi", lambda: nastavi_igru())
+	spremi_igru_gumb = create_styled_button(prozor, "Spremi", lambda: spremi_igru(prozor))
+	vrati_se_na_pocetnu_gumb = create_styled_button(prozor, "Početni meni", lambda: vrati_se_na_pocetnu(prozor))
+	izadi_bez_spremanja_gumb = create_styled_button(prozor, "Izađi", lambda: izadi_bez_spremanja(prozor))
 
 	#spremi_igru_gumb.config(bg="#bebebe", state="disabled")
 
@@ -906,29 +916,29 @@ def pocetna(prozor):
 
 	adut = []
 
-	ocisti_prozor(prozor)
+	clear_window(prozor)
 
 	canvas.grid(columnspan=3,rowspan=6)	
 
-	bela_title = vrati_naslov(prozor, "Bela")
+	bela_title = create_title_label(prozor, "Bela")
 
-	bela_slika = vrati_bela_slika(prozor)
+	bela_slika = create_bela_image(prozor)
 
-	nova_igra_gumb = vrati_gumb(prozor, text="Započni novu igru", command=lambda p=prozor: nova_igra(p))
+	nova_igra_gumb = create_styled_button(prozor, text="Započni novu igru", command=lambda p=prozor: nova_igra(p))
 
 	try:
 		spremljene_igre = list(map(lambda ime: ime[:-5], listdir("spremljene igre/")))
 	except:
 		mkdir("spremljene igre")
 		spremljene_igre = []
-	nastavi_spremljenu_igru_gumb = vrati_gumb(prozor, text="Nastavi prošlu igru",
+	nastavi_spremljenu_igru_gumb = create_styled_button(prozor, text="Nastavi prošlu igru",
 		command=lambda p=prozor, s=spremljene_igre: nastavi_spremljenu_igru(p, s))
 	if not spremljene_igre:
 		nastavi_spremljenu_igru_gumb.config(bg="#bebebe", state="disabled")
+
+	o_beli_gumb = create_styled_button(prozor, text="O igri", command=lambda p=prozor: o_beli(p))
 	
-	o_beli_gumb = vrati_gumb(prozor, text="O igri", command=lambda p=prozor: o_beli(p)) 
-	
-	izadi = vrati_gumb(prozor, text="Izađi", command=quit)
+	izadi = create_styled_button(prozor, text="Izađi", command=quit)
 
 	bela_title.grid(column=1, row=0)
 	bela_slika.grid(column=1,row=1)
@@ -941,13 +951,18 @@ def pocetna(prozor):
 prozor = Tk()
 prozor.geometry(f"+0+{y0}")
 prozor.title("Bela")
-prozor.iconbitmap('karte/tref.ico')
+try:
+    prozor.iconbitmap('karte/tref.ico')
+except TclError:
+    # On some systems (especially Linux), .ico files may not be supported
+    # The window will use default icon, which is acceptable
+    pass
 prozor.resizable(False, False)
 
 canvas = Canvas(prozor, width=sirina_prozora, height=visina_prozora)
 canvas.grid(columnspan=3,rowspan=6)
 
-pozadina = vrati_sliku_label(prozor, "karte/pozadina.png")
+pozadina = create_image_label(prozor, "karte/pozadina.png")
 
 pozadina.grid(row=0,column=0,rowspan=6,columnspan=3)
 

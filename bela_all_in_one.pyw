@@ -600,7 +600,12 @@ def prikazi_igru(prozor):
 		tablica_prozor = Toplevel(prozor)
 		tablica_prozor.geometry(f"+{sirina_prozora+5}+{y0}")
 		tablica_prozor.title("Bela")
-		tablica_prozor.iconbitmap('karte/tref.ico')
+		try:
+		    tablica_prozor.iconbitmap('karte/tref.ico')
+		except TclError:
+		    # On some systems (especially Linux), .ico files may not be supported
+		    # The window will use default icon, which is acceptable
+		    pass
 		tablica_prozor.resizable(False, False)
 		tablica_prozor.protocol("WM_DELETE_WINDOW", lambda: None)
 
@@ -833,7 +838,12 @@ def spremi_igru(prozor, izadi=False, pocetna=False):
 
 	spremanje_prozor = Toplevel(prozor)
 	spremanje_prozor.title("Spremanje")
-	spremanje_prozor.iconbitmap('karte/tref.ico')
+	try:
+	    spremanje_prozor.iconbitmap('karte/tref.ico')
+	except TclError:
+	    # On some systems (especially Linux), .ico files may not be supported
+	    # The window will use default icon, which is acceptable
+	    pass
 	spremanje_prozor.resizable(False, False)
 
 	spremanje_canvas = Canvas(spremanje_prozor, width=300, height=250)
@@ -1155,7 +1165,12 @@ def pocetna(prozor):
 prozor = Tk()
 prozor.geometry(f"+0+{y0}")
 prozor.title("Bela")
-prozor.iconbitmap('karte/tref.ico')
+try:
+    prozor.iconbitmap('karte/tref.ico')
+except TclError:
+    # On some systems (especially Linux), .ico files may not be supported
+    # The window will use default icon, which is acceptable
+    pass
 prozor.resizable(False, False)
 
 canvas = Canvas(prozor, width=sirina_prozora, height=visina_prozora)
